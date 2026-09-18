@@ -2,6 +2,7 @@ package com.example.osintprofileanalyzer;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -10,10 +11,15 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class MainActivity extends AppCompatActivity {
 
 EditText usernameInput;
 TextView resultText;
+Button analyzeButton;
 
 @Override
 protected void onCreate(Bundle savedInstanceState) {
@@ -29,8 +35,8 @@ protected void onCreate(Bundle savedInstanceState) {
 
     TextView subtitle = new TextView(this);
     subtitle.setText(
-            "Public-source username analyzer\n"
-            + "No login • No private access • No bypass"
+            "Public-page verification\n"
+                    + "No login • No private access • No bypass"
     );
     subtitle.setTextSize(16);
     subtitle.setPadding(0, 15, 0, 25);
@@ -39,8 +45,8 @@ protected void onCreate(Bundle savedInstanceState) {
     usernameInput.setHint("Enter username");
     usernameInput.setSingleLine(true);
 
-    Button analyzeButton = new Button(this);
-    analyzeButton.setText("ANALYZE");
+    analyzeButton = new Button(this);
+    analyzeButton.setText("VERIFY PUBLIC PROFILES");
 
     resultText = new TextView(this);
     resultText.setTextSize(16);
@@ -57,10 +63,10 @@ protected void onCreate(Bundle savedInstanceState) {
 
     setContentView(layout);
 
-    analyzeButton.setOnClickListener(v -> analyzeUsername());
+    analyzeButton.setOnClickListener(v -> verifyProfiles());
 }
 
-private void analyzeUsername() {
+private void verifyProfiles() {
 
     String username = usernameInput.getText().toString().trim();
 
@@ -71,51 +77,168 @@ private void analyzeUsername() {
 
     String clean = username.replace("@", "");
 
-    String report =
-            "PUBLIC PROFILE / OSINT REPORT\n"
-            + "==============================\n\n"
+    analyzeButton.setEnabled(false);
+    resultText.setText("Checking public pages...\nPlease wait.");
 
-            + "TARGET\n"
-            + clean + "\n\n"
+    new Thread(() -> {
 
-            + "USERNAME\n"
-            + " • " + clean + "\n\n"
+        StringBuilder report = new StringBuilder();
 
-            + "PUBLIC PROFILE URLS\n\n"
+        report.append("PUBLIC PROFILE / OSINT REPORT\n");
+        report.append("==============================\n\n");
+        report.append("TARGET\n");
+        report.append(clean);
+        report.append("\n\n");
 
-            + "Instagram\n"
-            + " • https://www.instagram.com/" + clean + "/\n"
-            + " • Status: CHECK PUBLICLY\n\n"
+        checkProfile(
+                report,
+                "Instagram",
+                "https://www.instagram.com/" + clean + "/"
+        );
 
-            + "X / Twitter\n"
-            + " • https://x.com/" + clean + "\n"
-            + " • Status: CHECK PUBLICLY\n\n"
+        checkProfile(
+                report,
+                "X / Twitter",
+                "https://x.com/" + clean
+        );
 
-            + "Reddit\n"
-            + " • https://www.reddit.com/user/" + clean + "/\n"
-            + " • Status: CHECK PUBLICLY\n\n"
+        checkProfile(
+                report,
+                "Reddit",
+                "https://www.reddit.com/user/" + clean + "/"
+        );
 
-            + "GitHub\n"
-            + " • https://github.com/" + clean + "\n"
-            + " • Status: CHECK PUBLICLY\n\n"
+        checkProfile(
+                report,
+                "GitHub",
+                "https://github.com/" + clean
+        );
 
-            + "TikTok\n"
-            + " • https://www.tiktok.com/@" + clean + "\n"
-            + " • Status: CHECK PUBLICLY\n\n"
+        checkProfile(
+                report,
+                "TikTok",
+                "https://www.tiktok.com/@" + clean
+        );
 
-            + "PUBLIC CONTACT INDICATORS\n"
-            + " • None automatically extracted\n\n"
+        report.append("\nASSESSMENT\n");
+        report.append("Public-page availability check completed.\n\n");
 
-            + "ASSESSMENT\n"
-            + "Username-based public-source check only.\n\n"
+        report.append("NOTE\n");
+        report.append(
+                "HTTP accessibility does not by itself prove that "
+                        + "the exact profile exists.\n"
+        );
+        report.append(
+                "Some platforms may use redirects, login pages, "
+                        + "anti-bot systems, or generic responses.\n"
+        );
+        report.append(
+                "No login, private-account access, credential collection, "
+                        + "or bypass is performed."
+        );
 
-            + "NOTE\n"
-            + "A generated URL does NOT confirm that a profile exists.\n"
-            + "Results must be verified from the public source.\n"
-            + "No login, private-account access, credential collection,\n"
-            + "or bypass is performed.";
+        runOnUiThread(() -> {
+            resultText.setText(report.toString());
+            analyzeButton.setEnabled(true);
+        });
 
-    resultText.setText(report);
+    }).start();
+}
+
+private void checkProfile(
+        StringBuilder report,
+        String platform,
+        String profileUrl
+) {
+
+    int statusCode = -1;
+
+    try {
+
+        URL url = new URL(profileUrl);
+
+        HttpURLConnection connection =
+                (HttpURLConnection) url.openConnection();
+
+        connection.setRequestMethod("HEAD");
+        connection.setConnectTimeout(8000);
+        connection.setReadTimeout(8000);
+        connection.setInstanceFollowRedirects(true);
+
+        connection.setRequestProperty(
+                "User-Agent",
+                "Mozilla/5.0"
+        );
+
+        statusCode = connection.getResponseCode();
+
+        connection.disconnect();
+
+    } catch (IOException e) {
+
+        try {
+
+            URL url = new URL(profileUrl);
+
+            HttpURLConnection connection =
+                    (HttpURLConnection) url.openConnection();
+
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(8000);
+            connection.setReadTimeout(8000);
+            connection.setInstanceFollowRedirects(true);
+
+            connection.setRequestProperty(
+                    "User-Agent",
+                    "Mozilla/5.0"
+            );
+
+            statusCode = connection.getResponseCode();
+
+            connection.disconnect();
+
+        } catch (IOException ignored) {
+            statusCode = -1;
+        }
+    }
+
+    report.append(platform);
+    report.append("\n");
+
+    report.append(" • ");
+    report.append(profileUrl);
+    report.append("\n");
+
+    if (statusCode >= 200 && statusCode < 300) {
+
+        report.append(" • Status: ACCESSIBLE (HTTP ");
+        report.append(statusCode);
+        report.append(")\n\n");
+
+    } else if (statusCode == 404) {
+
+        report.append(" • Status: NOT FOUND (HTTP 404)\n\n");
+
+    } else if (statusCode == 401 || statusCode == 403) {
+
+        report.append(" • Status: BLOCKED / RESTRICTED (HTTP ");
+        report.append(statusCode);
+        report.append(")\n\n");
+
+    } else if (statusCode == 429) {
+
+        report.append(" • Status: RATE LIMITED (HTTP 429)\n\n");
+
+    } else if (statusCode > 0) {
+
+        report.append(" • Status: UNKNOWN (HTTP ");
+        report.append(statusCode);
+        report.append(")\n\n");
+
+    } else {
+
+        report.append(" • Status: UNKNOWN / NETWORK ERROR\n\n");
+    }
 }
 
 }
