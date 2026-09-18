@@ -26,12 +26,14 @@ protected void onCreate(Bundle savedInstanceState) {
     TextView title = new TextView(this);
     title.setText("OSINT PROFILE ANALYZER");
     title.setTextSize(26);
-    title.setPadding(0, 0, 0, 30);
 
     TextView subtitle = new TextView(this);
-    subtitle.setText("Public-source username analyzer");
+    subtitle.setText(
+            "Public-source username analyzer\n"
+            + "No login • No private access • No bypass"
+    );
     subtitle.setTextSize(16);
-    subtitle.setPadding(0, 0, 0, 30);
+    subtitle.setPadding(0, 15, 0, 25);
 
     usernameInput = new EditText(this);
     usernameInput.setHint("Enter username");
@@ -42,7 +44,7 @@ protected void onCreate(Bundle savedInstanceState) {
 
     resultText = new TextView(this);
     resultText.setTextSize(16);
-    resultText.setPadding(0, 30, 0, 30);
+    resultText.setPadding(0, 25, 0, 25);
 
     ScrollView scrollView = new ScrollView(this);
     scrollView.addView(resultText);
@@ -67,29 +69,49 @@ private void analyzeUsername() {
         return;
     }
 
-    String cleanUsername = username.replace("@", "");
-
-    String instagramUrl =
-            "https://www.instagram.com/" + cleanUsername + "/";
+    String clean = username.replace("@", "");
 
     String report =
             "PUBLIC PROFILE / OSINT REPORT\n"
             + "==============================\n\n"
-            + "Target: " + cleanUsername + "\n"
-            + "Assessment: PUBLIC USERNAME CHECK\n\n"
-            + "USERNAMES\n"
-            + " • " + cleanUsername + "\n\n"
-            + "SOCIAL PROFILES\n"
-            + " • Instagram | " + cleanUsername + "\n"
-            + "   " + instagramUrl + "\n\n"
-            + "DOMAINS\n"
-            + " • instagram.com\n\n"
-            + "PUBLIC EMAIL INDICATORS\n"
-            + " • None found\n\n"
-            + "PHONE CANDIDATES\n"
-            + " • None found\n\n"
+
+            + "TARGET\n"
+            + clean + "\n\n"
+
+            + "USERNAME\n"
+            + " • " + clean + "\n\n"
+
+            + "PUBLIC PROFILE URLS\n\n"
+
+            + "Instagram\n"
+            + " • https://www.instagram.com/" + clean + "/\n"
+            + " • Status: CHECK PUBLICLY\n\n"
+
+            + "X / Twitter\n"
+            + " • https://x.com/" + clean + "\n"
+            + " • Status: CHECK PUBLICLY\n\n"
+
+            + "Reddit\n"
+            + " • https://www.reddit.com/user/" + clean + "/\n"
+            + " • Status: CHECK PUBLICLY\n\n"
+
+            + "GitHub\n"
+            + " • https://github.com/" + clean + "\n"
+            + " • Status: CHECK PUBLICLY\n\n"
+
+            + "TikTok\n"
+            + " • https://www.tiktok.com/@" + clean + "\n"
+            + " • Status: CHECK PUBLICLY\n\n"
+
+            + "PUBLIC CONTACT INDICATORS\n"
+            + " • None automatically extracted\n\n"
+
+            + "ASSESSMENT\n"
+            + "Username-based public-source check only.\n\n"
+
             + "NOTE\n"
-            + "Only public-source information is analyzed.\n"
+            + "A generated URL does NOT confirm that a profile exists.\n"
+            + "Results must be verified from the public source.\n"
             + "No login, private-account access, credential collection,\n"
             + "or bypass is performed.";
 
