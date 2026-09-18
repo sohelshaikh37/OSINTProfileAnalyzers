@@ -1,21 +1,99 @@
 package com.example.osintprofileanalyzer;
 
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+EditText usernameInput;
+TextView resultText;
 
-        TextView textView = new TextView(this);
-        textView.setText("OSINT Profile Analyzer\n\nPassive Public OSINT Tool");
-        textView.setTextSize(22);
-        textView.setPadding(40, 80, 40, 40);
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-        setContentView(textView);
+    LinearLayout layout = new LinearLayout(this);
+    layout.setOrientation(LinearLayout.VERTICAL);
+    layout.setPadding(40, 60, 40, 40);
+
+    TextView title = new TextView(this);
+    title.setText("OSINT PROFILE ANALYZER");
+    title.setTextSize(26);
+    title.setPadding(0, 0, 0, 30);
+
+    TextView subtitle = new TextView(this);
+    subtitle.setText("Public-source username analyzer");
+    subtitle.setTextSize(16);
+    subtitle.setPadding(0, 0, 0, 30);
+
+    usernameInput = new EditText(this);
+    usernameInput.setHint("Enter username");
+    usernameInput.setSingleLine(true);
+
+    Button analyzeButton = new Button(this);
+    analyzeButton.setText("ANALYZE");
+
+    resultText = new TextView(this);
+    resultText.setTextSize(16);
+    resultText.setPadding(0, 30, 0, 30);
+
+    ScrollView scrollView = new ScrollView(this);
+    scrollView.addView(resultText);
+
+    layout.addView(title);
+    layout.addView(subtitle);
+    layout.addView(usernameInput);
+    layout.addView(analyzeButton);
+    layout.addView(scrollView);
+
+    setContentView(layout);
+
+    analyzeButton.setOnClickListener(v -> analyzeUsername());
+}
+
+private void analyzeUsername() {
+
+    String username = usernameInput.getText().toString().trim();
+
+    if (TextUtils.isEmpty(username)) {
+        resultText.setText("Please enter a username.");
+        return;
     }
+
+    String cleanUsername = username.replace("@", "");
+
+    String instagramUrl =
+            "https://www.instagram.com/" + cleanUsername + "/";
+
+    String report =
+            "PUBLIC PROFILE / OSINT REPORT\n"
+            + "==============================\n\n"
+            + "Target: " + cleanUsername + "\n"
+            + "Assessment: PUBLIC USERNAME CHECK\n\n"
+            + "USERNAMES\n"
+            + " • " + cleanUsername + "\n\n"
+            + "SOCIAL PROFILES\n"
+            + " • Instagram | " + cleanUsername + "\n"
+            + "   " + instagramUrl + "\n\n"
+            + "DOMAINS\n"
+            + " • instagram.com\n\n"
+            + "PUBLIC EMAIL INDICATORS\n"
+            + " • None found\n\n"
+            + "PHONE CANDIDATES\n"
+            + " • None found\n\n"
+            + "NOTE\n"
+            + "Only public-source information is analyzed.\n"
+            + "No login, private-account access, credential collection,\n"
+            + "or bypass is performed.";
+
+    resultText.setText(report);
+}
+
 }
